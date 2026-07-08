@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexStream</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{'ns':'#080808','ns2':'#0e0e0e','ns3':'#151515','ns4':'#1c1c1c','ns5':'#252525','ns6':'#2e2e2e','nsA':'#d4a853','nsAh':'#e6be6a','nsAd':'#b08a3a','nsT':'#e8e8e8','nsT2':'#999999','nsT3':'#555555'},fontFamily:{'d':['Outfit','sans-serif'],'b':['DM Sans','sans-serif']}}}}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{--accent:#d4a853;--accent-h:#e6be6a;--glow:rgba(212,168,83,0.2)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:#080808;color:#e8e8e8;overflow-x:hidden}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#2e2e2e;border-radius:3px}::-webkit-scrollbar-thumb:hover{background:#444}
+::selection{background:var(--accent);color:#000}
+#navbar{background:linear-gradient(180deg,rgba(8,8,8,0.97) 0%,rgba(8,8,8,0.85) 60%,transparent 100%);z-index:50}
+#sidebar{background:rgba(11,11,11,0.97);backdrop-filter:blur(20px);border-right:1px solid rgba(255,255,255,0.04);overflow-y:auto;overflow-x:hidden;transition:width .25s cubic-bezier(.4,0,.2,1),transform .25s cubic-bezier(.4,0,.2,1)}
+#sidebar::-webkit-scrollbar{width:0}
+.sb-item{display:flex;align-items:center;gap:14px;padding:9px 14px;border-radius:10px;cursor:pointer;transition:all .15s;color:#888;font-size:13.5px;white-space:nowrap;overflow:hidden}
+.sb-item:hover{background:#1c1c1c;color:#e8e8e8}
+.sb-item.active{background:linear-gradient(135deg,rgba(212,168,83,0.12),rgba(212,168,83,0.04));color:var(--accent)}
+.sb-item.active i{color:var(--accent)}
+.sb-item i{width:22px;text-align:center;font-size:15px;flex-shrink:0}
+.genre-pill{padding:6px 18px;border-radius:20px;background:rgba(255,255,255,0.06);white-space:nowrap;cursor:pointer;transition:all .2s;font-size:13px;font-weight:500;color:#999;border:1px solid transparent;user-select:none}
+.genre-pill:hover{background:rgba(255,255,255,0.1);color:#e8e8e8}
+.genre-pill.active{background:var(--accent);color:#000;font-weight:600;box-shadow:0 2px 16px var(--glow)}
+.poster-card{cursor:pointer;transition:transform .3s ease;position:relative}
+.poster-card:hover{transform:scale(1.05);z-index:2}
+.poster-card:hover .poster-img img{filter:brightness(0.6)}
+.poster-card:hover .poster-overlay{opacity:1}
+.poster-card:hover .poster-play{transform:translate(-50%,-50%) scale(1);opacity:1}
+.poster-img{position:relative;aspect-ratio:2/3;border-radius:10px;overflow:hidden;background:#151515}
+.poster-img img{width:100%;height:100%;object-fit:cover;transition:filter .3s}
+.poster-overlay{position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,0.92) 0%,transparent 55%);opacity:0;transition:opacity .3s;display:flex;flex-direction:column;justify-content:flex-end;padding:14px}
+.poster-play{position:absolute;top:42%;left:50%;transform:translate(-50%,-50%) scale(.7);opacity:0;transition:all .3s;width:46px;height:46px;background:rgba(212,168,83,0.9);border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:3}
+.poster-play i{color:#000;font-size:15px;margin-left:2px}
+.poster-rating{display:inline-flex;align-items:center;gap:3px;background:rgba(212,168,83,0.15);color:var(--accent);font-size:11px;font-weight:600;padding:2px 7px;border-radius:4px}
+.progress-bar{position:absolute;bottom:0;left:0;height:3px;background:var(--accent);border-radius:0 0 10px 10px;z-index:2;transition:width .3s}
+.hero{position:relative;height:72vh;min-height:480px;max-height:720px;overflow:hidden}
+.hero-bg img{width:100%;height:100%;object-fit:cover;filter:brightness(0.35)}
+.hero-grad{position:absolute;inset:0;background:linear-gradient(0deg,#080808 0%,rgba(8,8,8,0.5) 40%,rgba(8,8,8,0.15) 70%,rgba(8,8,8,0.4) 100%)}
+.hero-grad-r{position:absolute;inset:0;background:linear-gradient(90deg,#080808 0%,transparent 55%)}
+.hero-content{position:absolute;bottom:0;left:0;right:0;padding:0 48px 52px;z-index:2}
+.row-scroll{display:flex;gap:14px;overflow-x:auto;padding-bottom:8px;scroll-snap-type:x mandatory;scrollbar-width:none}
+.row-scroll::-webkit-scrollbar{display:none}
+.row-scroll>*{scroll-snap-align:start;flex-shrink:0}
+.btn-gold{padding:12px 30px;border-radius:8px;background:var(--accent);color:#000;font-weight:700;font-size:14px;border:none;cursor:pointer;transition:all .2s;font-family:inherit;display:inline-flex;align-items:center;gap:8px}
+.btn-gold:hover{background:var(--accent-h);box-shadow:0 4px 20px var(--glow)}
+.btn-ghost{padding:12px 26px;border-radius:8px;background:rgba(255,255,255,0.07);color:#e8e8e8;font-weight:600;font-size:14px;border:1px solid rgba(255,255,255,0.08);cursor:pointer;transition:all .2s;font-family:inherit;display:inline-flex;align-items:center;gap:8px}
+.btn-ghost:hover{background:rgba(255,255,255,0.12)}
+.btn-action{padding:8px 18px;border-radius:20px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.07);color:#aaa;cursor:pointer;font-size:13px;font-weight:500;transition:all .15s;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+.btn-action:hover{background:rgba(255,255,255,0.1);color:#fff}
+.btn-action.active{color:var(--accent);border-color:rgba(212,168,83,0.25);background:rgba(212,168,83,0.08)}
+.btn-action i{font-size:14px}
+.modal-overlay{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;visibility:hidden;transition:all .25s}
+.modal-overlay.show{opacity:1;visibility:visible}
+.modal-bg{position:absolute;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px)}
+.modal-box{position:relative;z-index:1;background:#151515;border:1px solid rgba(255,255,255,0.06);border-radius:16px;max-width:440px;width:100%;transform:scale(0.95) translateY(10px);transition:transform .25s cubic-bezier(.4,0,.2,1);overflow:hidden}
+.modal-overlay.show .modal-box{transform:scale(1) translateY(0)}
+.input-field{width:100%;height:46px;padding:0 16px;background:#0e0e0e;border:1px solid #252525;border-radius:10px;color:#e8e8e8;font-size:14px;font-family:inherit;outline:none;transition:border-color .2s}
+.input-field:focus{border-color:var(--accent)}
+.input-field::placeholder{color:#444}
+.input-err{border-color:#e8453c!important}
+.err-msg{color:#e8453c;font-size:12px;margin-top:4px;margin-left:2px;display:none}
+.err-msg.show{display:block}
+.toast{display:flex;align-items:center;gap:10px;padding:12px 20px;background:#1c1c1c;border:1px solid #2e2e2e;border-radius:10px;color:#e8e8e8;font-size:13px;transform:translateX(120%);transition:transform .3s cubic-bezier(.4,0,.2,1);box-shadow:0 8px 30px rgba(0,0,0,0.5);min-width:220px}
+.toast.show{transform:translateX(0)}
+.toast i{color:var(--accent)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:36px;height:36px;border:3px solid #1c1c1c;border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .4s ease both}
+.fd1{animation-delay:.04s}.fd2{animation-delay:.08s}.fd3{animation-delay:.12s}.fd4{animation-delay:.16s}.fd5{animation-delay:.2s}.fd6{animation-delay:.24s}.fd7{animation-delay:.28s}.fd8{animation-delay:.32s}
+.user-menu{position:absolute;top:100%;right:0;margin-top:8px;background:#151515;border:1px solid rgba(255,255,255,0.06);border-radius:12px;min-width:220px;padding:6px;opacity:0;visibility:hidden;transform:translateY(-8px);transition:all .2s;z-index:55;box-shadow:0 12px 40px rgba(0,0,0,0.5)}
+.user-menu.show{opacity:1;visibility:visible;transform:translateY(0)}
+.um-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;cursor:pointer;color:#aaa;font-size:13px;transition:all .15s}
+.um-item:hover{background:#1c1c1c;color:#e8e8e8}
+.um-item i{width:18px;text-align:center;font-size:14px}
+.um-item.danger{color:#e8453c}.um-item.danger:hover{background:rgba(232,69,60,0.1)}
+.resume-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.8);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:10;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .3s}
+.resume-overlay.show{opacity:1;pointer-events:auto}
+.resume-overlay:hover{background:rgba(0,0,0,0.85)}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:80px 20px;text-align:center}
+.poster-w{width:160px}
+.api-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#555;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,0.03)}
+.api-badge.ok{color:#4ade80}.api-badge.err{color:#f87171}
+@media(max-width:1024px){#sidebar{transform:translateX(-100%);position:fixed;z-index:45;width:260px!important}#sidebar.open{transform:translateX(0)}#main{margin-left:0!important}.hero-content{padding:0 24px 32px}.hero{min-height:340px}}
+@media(max-width:640px){.hero{height:55vh;min-height:280px}.hero-content{padding:0 16px 24px}.poster-w{width:130px!important}.watch-layout{flex-direction:column!important}.watch-rec{width:100%!important}.user-menu{right:-60px}}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<nav id="navbar" class="fixed top-0 left-0 right-0 h-16 flex items-center px-5 gap-4">
+  <div class="flex items-center gap-3 flex-shrink-0">
+    <button id="menuBtn" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/5 transition-colors" aria-label="Menu"><i class="fas fa-bars text-nsT2 text-sm"></i></button>
+    <a href="#home" class="flex items-center gap-2.5 no-underline"><div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:linear-gradient(135deg,#d4a853,#e6be6a)"><i class="fas fa-play text-black text-xs" style="margin-left:1px"></i></div><span class="font-d font-bold text-lg tracking-tight text-nsT hidden sm:inline">NexStream</span></a>
+  </div>
+  <div class="flex-1 flex justify-center max-w-xl mx-auto"><div class="flex w-full"><input id="searchInput" type="text" placeholder="Search movies, games..." class="flex-1 h-10 px-4 bg-white/5 border border-white/8 rounded-l-full text-sm text-nsT placeholder-nsT3 outline-none focus:border-white/15 transition-colors font-b"><button id="searchBtn" class="h-10 px-5 bg-white/5 border border-l-0 border-white/8 rounded-r-full text-nsT2 hover:bg-white/8 transition-colors" aria-label="Search"><i class="fas fa-search text-sm"></i></button></div></div>
+  <div class="flex items-center gap-2 flex-shrink-0">
+    <span id="apiStatus" class="api-badge hidden"><i class="fas fa-circle" style="font-size:6px"></i> <span></span></span>
+    <div class="relative" id="userArea">
+      <button id="userBtn" class="w-9 h-9 rounded-full bg-ns5 flex items-center justify-center text-nsT2 text-sm font-bold cursor-pointer hover:ring-2 hover:ring-nsA/30 transition-all"><i class="fas fa-user text-xs"></i></button>
+      <div id="userMenu" class="user-menu">
+        <div id="menuProfile" class="px-4 py-3 border-b border-white/5 mb-1 hidden"><p id="menuUname" class="text-sm font-semibold text-nsT"></p><p id="menuEmail" class="text-xs text-nsT3 mt-0.5"></p></div>
+        <div class="um-item" id="menuMyList"><i class="fas fa-bookmark"></i>My List</div>
+        <div class="um-item" id="menuHistory"><i class="fas fa-clock-rotate-left"></i>Watch History</div>
+        <div class="h-px bg-white/5 my-1"></div>
+        <div class="um-item" id="menuLoginBtn"><i class="fas fa-right-to-bracket"></i>Sign In</div>
+        <div class="um-item danger hidden" id="menuLogoutBtn"><i class="fas fa-right-from-bracket"></i>Sign Out</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div id="sidebar-overlay" class="fixed inset-0 z-40 bg-black/60" style="display:none"></div>
+<aside id="sidebar" class="fixed top-16 left-0 bottom-0 z-45 py-3 px-2 flex flex-col gap-0.5" style="width:240px">
+  <div class="sb-item active" data-nav="home"><i class="fas fa-house"></i><span>Home</span></div>
+  <div class="sb-item" data-nav="movies"><i class="fas fa-film"></i><span>Movies</span></div>
+  <div class="sb-item" data-nav="games"><i class="fas fa-gamepad"></i><span>Games</span></div>
+  <div class="sb-item" data-nav="mylist"><i class="fas fa-bookmark"></i><span>My List</span></div>
+  <div class="sb-item" data-nav="history"><i class="fas fa-clock-rotate-left"></i><span>History</span></div>
+  <div class="h-px bg-white/5 my-2 mx-2"></div>
+  <div class="px-3 py-1 text-[10px] font-semibold text-nsT3 uppercase tracking-widest">Genres</div>
+  <div class="sb-item" data-nav="g-Action"><i class="fas fa-bolt"></i><span>Action</span></div>
+  <div class="sb-item" data-nav="g-Comedy"><i class="fas fa-face-laugh-beam"></i><span>Comedy</span></div>
+  <div class="sb-item" data-nav="g-Thriller"><i class="fas fa-mask"></i><span>Thriller</span></div>
+  <div class="sb-item" data-nav="g-Sci-Fi"><i class="fas fa-rocket"></i><span>Sci-Fi</span></div>
+  <div class="sb-item" data-nav="g-Horror"><i class="fas fa-ghost"></i><span>Horror</span></div>
+  <div class="sb-item" data-nav="g-Drama"><i class="fas fa-masks-theater"></i><span>Drama</span></div>
+  <div class="sb-item" data-nav="g-RPG"><i class="fas fa-hat-wizard"></i><span>RPG</span></div>
+  <div class="sb-item" data-nav="g-FPS"><i class="fas fa-crosshairs"></i><span>FPS</span></div>
+  <div class="mt-auto px-3 py-3 text-[10px] text-nsT3 leading-relaxed opacity-50">NexStream v3.0</div>
+</aside>
+
+<main id="main" class="mt-0 transition-all duration-200" style="margin-left:240px"><div id="content"></div></main>
+<div id="toasts" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2"></div>
+<button id="scrollTopBtn" class="fixed bottom-6 left-6 z-50 w-10 h-10 rounded-full bg-ns4 border border-white/8 text-nsT2 flex items-center justify-center hover:bg-ns5 transition-all opacity-0 pointer-events-none" aria-label="Top"><i class="fas fa-arrow-up text-sm"></i></button>
+
+<div id="authModal" class="modal-overlay"><div class="modal-bg"></div><div class="modal-box"><div class="p-8">
+  <div class="text-center mb-6"><div class="w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center" style="background:linear-gradient(135deg,#d4a853,#e6be6a)"><i class="fas fa-play text-black text-sm ml-0.5"></i></div><h2 class="font-d font-bold text-xl" id="authTitle">Welcome Back</h2><p class="text-nsT3 text-sm mt-1" id="authSub">Sign in to continue watching</p></div>
+  <div id="authForm">
+    <div class="mb-3 hidden" id="nameGroup"><label class="block text-xs font-medium text-nsT2 mb-1.5 ml-1">Username</label><input id="authName" type="text" placeholder="Choose a username" class="input-field"><p class="err-msg" id="nameErr">Username is required</p></div>
+    <div class="mb-3"><label class="block text-xs font-medium text-nsT2 mb-1.5 ml-1">Email</label><input id="authEmail" type="email" placeholder="your@email.com" class="input-field"><p class="err-msg" id="emailErr">Enter a valid email</p></div>
+    <div class="mb-5"><label class="block text-xs font-medium text-nsT2 mb-1.5 ml-1">Password</label><input id="authPass" type="password" placeholder="Min 6 characters" class="input-field"><p class="err-msg" id="passErr">Password must be at least 6 characters</p></div>
+    <button id="authSubmit" class="btn-gold w-full justify-center mb-3">Sign In</button>
+    <div class="relative my-5"><div class="h-px bg-white/5"></div><span class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-ns3 px-3 text-xs text-nsT3">or continue with</span></div>
+    <button id="tgAuthBtn" class="w-full h-11 rounded-lg bg-[#229ED9] text-white font-semibold text-sm hover:bg-[#1a8bc2] transition-colors flex items-center justify-center gap-2 border-none cursor-pointer font-b mb-4"><i class="fab fa-telegram text-lg"></i>Telegram</button>
+  </div>
+  <p class="text-center text-xs text-nsT3" id="authToggleText">Don't have an account? <span class="text-nsA cursor-pointer hover:underline font-medium" id="authSwitch">Sign Up</span></p>
+</div></div></div>
+
+<script>
+// ============================================================
+// ENVIRONMENT DETECTION
+// Automatically points to localhost if run on your PC!
+// ============================================================
+const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API = IS_LOCAL ? 'http://localhost:8000/api' : 'https://nb-orwg.onrender.com/api';
+const BASE = API.replace('/api', '');
+
+const GENRES=['All','Action','Comedy','Thriller','Sci-Fi','Horror','Drama','RPG','FPS','Adventure'];
+
+/* ===== API Handling Layer ===== */
+let apiOk=false;
+async function apiFetch(path,opts={}){
+  const ctrl=new AbortController();
+  const t=setTimeout(()=>ctrl.abort(),30000);
+  try{
+    const h={...(opts.headers||{})};
+    const tk=localStorage.getItem('ns_token');
+    if(tk) h['Authorization']='Bearer '+tk;
+
+    if(opts.body){
+      h['Content-Type']='application/json';
+    } else if(opts.method==='POST'||opts.method==='PUT'){
+      h['Content-Type']='application/json';
+      opts.body=JSON.stringify({});
+    }
+
+    const r=await fetch(API+path,{...opts,headers:h,signal:ctrl.signal});
+    clearTimeout(t);
+
+    let resData=null;
+    const contentType = r.headers.get('content-type');
+    if(contentType && contentType.includes('application/json')){
+      try{resData=await r.json();}catch(e){}
+    } else {
+      try{resData=await r.text();}catch(e){}
+    }
+
+    if(!r.ok){
+      apiOk=false;updateApiBadge(false);
+      return resData && typeof resData === 'object' ? resData : { detail: resData || 'Request failed' };
+    }
+
+    apiOk=true;updateApiBadge(true);
+    return resData;
+  }catch(e){
+    clearTimeout(t);
+    if(e.name!=='AbortError')console.warn('API Routing Error:',path,e.message);
+    apiOk=false;updateApiBadge(false);
+    return null;
+  }
+}
+
+function updateApiBadge(ok){
+  const b=document.getElementById('apiStatus');
+  if(!b) return;
+  b.classList.remove('hidden','ok','err');
+  b.classList.add(ok?'ok':'err');
+  b.querySelector('span').textContent=ok?'Live':'Offline';
+}
+
+function extractArray(j) {
+  if (!j) return [];
+  if (Array.isArray(j)) return j;
+  if (j.data && Array.isArray(j.data)) return j.data;
+  if (j.results && Array.isArray(j.results)) return j.results;
+  return [];
+}
+
+/* ===== LOCAL STORAGE LAYER ===== */
+const LS={
+  get(k,d){try{return JSON.parse(localStorage.getItem(k))||d}catch{return d}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){console.warn('LS System Warning:',e)}}
+};
+
+/* ===== AUTH MANAGEMENT ===== */
+const Auth={
+  getUser(){return LS.get('ns_user',null)},
+  getToken(){const u=this.getUser();return u?u.token:null},
+  isLoggedIn(){return!!this.getUser()},
+  save(u){
+    if(!u) return;
+    const dataObj = u.data || u;
+    const token = dataObj.token || dataObj.access_token || localStorage.getItem('ns_token');
+    const name = dataObj.name || dataObj.user?.name || dataObj.email?.split('@')[0] || 'User';
+    const email = dataObj.email || dataObj.user?.email || '';
+    const normalized = { name, email, token };
+
+    LS.set('ns_user', normalized);
+    if(token) localStorage.setItem('ns_token', token);
+    else localStorage.removeItem('ns_token');
+    this.updateUI();
+  },
+  logout(){
+    LS.set('ns_user',null);
+    localStorage.removeItem('ns_token');
+    this.updateUI();
+    toast('Signed out');
+  },
+  async login(email,pw){
+    const r=await apiFetch('/auth/login',{method:'POST',body:JSON.stringify({email,password:pw})});
+    if(r && !r.detail && (r.token || r.access_token || r.data)){this.save(r);return{ok:true,user:this.getUser()}}
+    return{ok:false, err: r?.detail || 'Server is waking up, please wait 10 seconds and try again.'};
+  },
+  async signup(name,email,pw){
+    const r=await apiFetch('/auth/register',{method:'POST',body:JSON.stringify({name,email,password:pw})});
+    if(r && !r.detail && (r.token || r.access_token || r.data)){this.save(r);return{ok:true,user:this.getUser()}}
+    return{ok:false, err: r?.detail || 'Server is waking up, please wait 10 seconds and try again.'};
+  },
+  tgLogin(id,name){
+    this.save({name,email:'tg_'+id+'@local',token:'tok_local_'+id,myList:[],history:[]});
+    this.updateUI();
+    toast('Signed in with Telegram');
+    closeAuthModal();
+  },
+  updateUI(){
+    const u=this.getUser(),btn=document.getElementById('userBtn'),pr=document.getElementById('menuProfile'),lb=document.getElementById('menuLoginBtn'),lo=document.getElementById('menuLogoutBtn');
+    if(u){btn.innerHTML=u.name.charAt(0).toUpperCase();btn.style.background='linear-gradient(135deg,#d4a853,#e6be6a)';btn.className='w-9 h-9 rounded-full flex items-center justify-center text-black text-sm font-bold cursor-pointer hover:ring-2 hover:ring-nsA/30 transition-all';pr.classList.remove('hidden');document.getElementById('menuUname').textContent=u.name;document.getElementById('menuEmail').textContent=u.email;lb.classList.add('hidden');lo.classList.remove('hidden')}
+    else{btn.innerHTML='<i class="fas fa-user text-xs"></i>';btn.style.background='';btn.className='w-9 h-9 rounded-full bg-ns5 flex items-center justify-center text-nsT2 text-sm font-bold cursor-pointer hover:ring-2 hover:ring-nsA/30 transition-all';pr.classList.add('hidden');lb.classList.remove('hidden');lo.classList.add('hidden')}
+  }
+};
+
+/* ===== WATCH HISTORY LAYER ===== */
+const H={
+  _k:'ns_history',
+  add(vid){
+    if(!Auth.isLoggedIn())return;
+    let h=LS.get(this._k,[]);h=h.filter(x=>String(x.id)!==String(vid));h.unshift({id:vid,t:Date.now()});if(h.length>200)h=h.slice(0,200);LS.set(this._k,h);
+    apiFetch('/user/history/'+vid,{method:'POST'}).catch(()=>{});
+  },
+  get(){return LS.get(this._k,[])},
+  clear(){
+    LS.set(this._k,[]);toast('History cleared');
+    apiFetch('/user/history',{method:'DELETE'}).catch(()=>{});
+  }
+};
+
+/* ===== WATCH TRACKING POSITION ===== */
+const WP={
+  _k:'ns_watchpos',
+  save(vid,t,d){const p=LS.get(this._k,{});p[vid]={time:Math.floor(t),dur:Math.floor(d)};LS.set(this._k,p)},
+  get(vid){return(LS.get(this._k,{}))[vid]||null},
+  clear(vid){const p=LS.get(this._k,{});delete p[vid];LS.set(this._k,p)}
+};
+
+/* ===== WISHLIST SAVING LAYER ===== */
+const ML={
+  _k:'ns_mylist',
+  toggle(vid){
+    if(!Auth.isLoggedIn()){toast('Sign in to save');openAuthModal();return false}
+    let l=LS.get(this._k,[]).map(String);
+    const sVid = String(vid);
+    const i=l.indexOf(sVid);
+    if(i>=0){l.splice(i,1);LS.set(this._k,l);toast('Removed from My List');apiFetch('/user/list/'+vid,{method:'POST'}).catch(()=>{});return false}
+    l.push(sVid);LS.set(this._k,l);toast('Added to My List');apiFetch('/user/list/'+vid,{method:'POST'}).catch(()=>{});return true;
+  },
+  has(vid){return LS.get(this._k,[]).map(String).includes(String(vid))},
+  get(){return LS.get(this._k,[])}
+};
+
+/* ===== UTILITIES ===== */
+const fv=n=>{if(!n)return'';n=+n;if(n>=1e6)return(n/1e6).toFixed(1).replace(/\.0$/,'')+'M';if(n>=1e3)return(n/1e3).toFixed(1).replace(/\.0$/,'')+'K';return n+''};
+const fd=s=>{if(!s)return'0:00';s=+s;const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sc=s%60;return h>0?h+':'+String(m).padStart(2,'0')+':'+String(sc).padStart(2,'0'):m+':'+String(sc).padStart(2,'0');};
+const ft=s=>{const m=Math.floor(s/60),sc=Math.floor(s%60);return m+':'+String(sc).padStart(2,'0');};
+const esc=s=>{if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML};
+function toast(msg){const t=document.createElement('div');t.className='toast';t.innerHTML=`<i class="fas fa-check-circle"></i><span>${esc(msg)}</span>`;document.getElementById('toasts').appendChild(t);requestAnimationFrame(()=>t.classList.add('show'));setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300)},3000)}
+
+/* ===== RUNTIME APP STATE ===== */
+const S={page:'home',param:null,genre:'All',sbOpen:innerWidth>1024,authMode:'login',cache:{},lastWatched:null};
+
+/* ===== RECOMMENDATION ALGORITHM ===== */
+function getRecommendations(currentVid,allMovies,count=12){
+  const cur=allMovies.find(m=>String(m.id)===String(currentVid));
+  if(!cur)return allMovies.slice(0,count);
+  const genres=cur.genres||[];
+  const scored=allMovies.filter(m=>String(m.id)!==String(currentVid)).map(m=>{
+    let score=0;
+    const mg=m.genres||[];
+    genres.forEach(g=>{if(mg.includes(g))score+=3});
+    if(m.type===cur.type)score+=1;
+    score-=(Math.abs((m.year||0)-(cur.year||0)))*0.01;
+    return{...m,score};
+  });
+  scored.sort((a,b)=>b.score-a.score);
+  return scored.slice(0,count);
+}
+
+/* ===== APP NAVIGATION ROUTER ===== */
+function nav(page,param){
+  S.page=page;S.param=param;
+  const c=document.getElementById('content');
+  c.innerHTML='<div class="flex items-center justify-center" style="height:50vh"><div class="spinner"></div></div>';
+  if(innerWidth<=1024)closeSB();
+  setTimeout(()=>{
+    switch(page){
+      case'home':renderHome();break;
+      case'watch':renderWatch(param);break;
+      case'search':renderSearch(param);break;
+      case'movies':S.genre='All';renderGrid('movie');break;
+      case'games':S.genre='All';renderGrid('game');break;
+      case'mylist':renderMyList();break;
+      case'history':renderHistoryPage();break;
+      default:page.startsWith('g-')?(S.genre=page.slice(2),renderHome()):c.innerHTML=`<div class="empty-state"><i class="fas fa-compass text-4xl text-nsT3"></i><p class="text-nsT2">Coming soon</p></div>`;
+    }
+    scrollTo({top:0,behavior:'instant'});updateSB();
+  },50);
+}
+function parseHash(){const h=location.hash.slice(1)||'home',p=h.split('/');if(p[0]==='watch'&&p[1])return nav('watch',p[1]);if(p[0]==='search'&&p[1])return nav('search',decodeURIComponent(p[1]));nav(p[0],null)}
+
+/* ===== LAYOUT GENERATOR MODULES ===== */
+function pc(v,d=0,prog=false){
+  if(!v) return '';
+  const pos=prog?WP.get(v.id):null;
+  const pct=pos&&pos.dur>0?Math.min(pos.time/pos.dur*100,100):0;
+  
+  // FIX: Prepend local backend base URL if the thumbnail lacks a domain
+  let ps = v.poster||v.thumb_url||'';
+  if (ps && ps.startsWith('/')) ps = BASE + ps;
+  
+  const dur=v.dur||v.duration||0;
+  return`<div class="poster-card poster-w fade-up fd${d%8+1}" data-vid="${v.id}">
+    <div class="poster-img">
+      <img src="${ps}" alt="${esc(v.title)}" loading="lazy" onerror="this.src='https://picsum.photos/seed/${v.id}/400/600'">
+      <div class="poster-play"><i class="fas fa-play"></i></div>
+      <div class="poster-overlay">
+        <p class="text-xs text-nsT2 mb-0.5">${v.year||''}${dur?' · '+fd(dur):''}</p>
+        <p class="text-sm font-medium text-nsT leading-snug line-clamp-2">${esc(v.title)}</p>
+        <div class="flex items-center gap-2 mt-2">${v.rating?`<span class="poster-rating"><i class="fas fa-star" style="font-size:9px"></i>${v.rating}</span>`:''}${v.views?`<span class="text-[11px] text-nsT3">${fv(v.views)}</span>`:''}</div>
+      </div>
+      ${pct>0?`<div class="progress-bar" style="width:${pct}%"></div>`:''}
+    </div>
+  </div>`;
+}
+
+function row(title,items,prog=false){
+  if(!items||!items.length)return'';
+  return`<section class="mb-8"><h2 class="font-d font-semibold text-lg mb-3 px-0.5">${title}</h2><div class="row-scroll">${items.map((v,i)=>pc(v,i,prog)).join('')}</div></section>`;
+}
+
+function genreBar(){
+  return`<div class="sticky top-16 z-20 bg-ns/90 backdrop-blur-lg border-b border-white/4 px-6 py-3 flex gap-2 overflow-x-auto" style="scrollbar-width:none">${GENRES.map(g=>`<div class="genre-pill${S.genre===g?' active':''}" data-genre="${g}">${g}</div>`).join('')}</div>`;
+}
+
+/* ===== APP VIEWS AND PAGES ===== */
+async function renderHome(){
+  const c=document.getElementById('content');
+  const g=S.genre!=='All'?S.genre:'';
+  const j=await apiFetch('/movies?page=1&limit=40&genre='+g);
+  const movies=extractArray(j);
+
+  if(!movies.length){c.innerHTML=`<div class="empty-state" style="min-height:60vh"><i class="fas fa-satellite-dish text-5xl text-nsT3 mb-2"></i><p class="text-nsT2 text-lg">Waiting for content</p><p class="text-nsT3 text-sm max-w-md">Your Channel is syncing, or the server is spinning up. This page will auto-update.</p><button class="btn-gold mt-4" onclick="renderHome()"><i class="fas fa-rotate"></i> Refresh</button></div>`;return}
+
+  S.cache.movies=movies;
+  const feat=movies[0];
+
+  const hist=H.get();
+  const contW=hist.slice(0,15).map(h=>movies.find(m=>String(m.id)===String(h.id))).filter(Boolean);
+
+  let becauseOf=[];
+  if(S.lastWatched){
+    becauseOf=getRecommendations(S.lastWatched,movies,15);
+  }
+
+  const topRated=[...movies].sort((a,b)=>(b.rating||0)-(a.rating||0)).slice(0,15);
+  const actionV=movies.filter(v=>v.genres&&v.genres.includes('Action')).slice(0,15);
+
+  let poster = feat.poster||feat.thumb_url||'';
+  if (poster && poster.startsWith('/')) poster = BASE + poster;
+
+  const dur=feat.dur||feat.duration||0;
+  let html=`<div class="hero">
+    <div class="hero-bg"><img src="${poster}" alt="" onerror="this.src='https://picsum.photos/seed/hero/1280/720'"></div>
+    <div class="hero-grad"></div><div class="hero-grad-r"></div>
+    <div class="hero-content">
+      <div class="flex items-center gap-2 mb-3">${feat.rating?`<span class="poster-rating text-sm px-2.5 py-1"><i class="fas fa-star" style="font-size:10px"></i>${feat.rating}</span>`:''}<span class="text-sm text-nsT2">${feat.year||''}</span>${dur?`<span class="text-nsT3 text-sm">·</span><span class="text-sm text-nsT2">${fd(dur)}</span>`:''}</div>
+      <h1 class="font-d font-bold text-3xl sm:text-4xl lg:text-5xl leading-tight mb-3 max-w-2xl hero-title">${esc(feat.title)}</h1>
+      <p class="text-sm text-nsT2 max-w-lg mb-5 line-clamp-2 leading-relaxed">${esc((feat.desc||'').split('\n')[0])}</p>
+      <div class="flex items-center gap-3 flex-wrap">
+        <button class="btn-gold" data-vid="${feat.id}" data-action="play"><i class="fas fa-play"></i>Watch Now</button>
+        <button class="btn-ghost" data-action="addlist" data-vid="${feat.id}"><i class="fas fa-plus"></i>My List</button>
+      </div>
+    </div>
+  </div><div class="px-6 pt-6 pb-10">`;
+
+  if(contW.length)html+=row('Continue Watching',contW,true);
+  if(becauseOf.length)html+=row('Because You Watched',becauseOf);
+  if(g)html+=row(g,movies);
+  else{html+=row('Trending Now',movies);html+=row('Top Rated',topRated);if(actionV.length)html+=row('Action',actionV)}
+  html+=`</div>`;c.innerHTML=html;
+}
+
+async function renderGrid(type){
+  const c=document.getElementById('content');
+  const g=S.genre!=='All'?S.genre:'';
+  const j=await apiFetch('/'+type+'s?page=1&limit=60&genre='+g);
+  const items=extractArray(j);
+  c.innerHTML=genreBar()+`<div class="p-6"><h1 class="font-d font-bold text-2xl mb-5">${type==='movie'?'Movies':'Games'}${g?' — '+g:''}</h1>${items.length?`<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-4">${items.map((v,i)=>pc(v,i)).join('')}</div>`:`<div class="empty-state"><i class="fas fa-${type==='movie'?'film':'gamepad'} text-4xl text-nsT3"></i><p class="text-nsT2">No ${type}s found</p></div>`}</div>`;
+  S.cache[type+'s']=items;
+}
+
+function renderMyList(){
+  const c=document.getElementById('content');
+  if(!Auth.isLoggedIn()){c.innerHTML=`<div class="empty-state" style="min-height:60vh"><i class="fas fa-lock text-4xl text-nsT3"></i><p class="text-nsT2 text-lg">Sign in to see your list</p><button class="btn-gold mt-3" onclick="openAuthModal()">Sign In</button></div>`;return}
+  const ids=ML.get();
+  const all=S.cache.movies||[];
+  const items=ids.map(id=>all.find(m=>String(m.id)===String(id))).filter(Boolean);
+  c.innerHTML=`<div class="p-6"><div class="flex items-center justify-between mb-5"><h1 class="font-d font-bold text-2xl">My List</h1>${items.length?`<button class="text-sm text-nsT3 hover:text-nsT transition-colors" onclick="LS.set('ns_mylist',[]);toast('List cleared');renderMyList()">Clear All</button>`:''}</div>${items.length?`<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-4">${items.map((v,i)=>pc(v,i)).join('')}</div>`:`<div class="empty-state" style="min-height:50vh"><i class="fas fa-bookmark text-4xl text-nsT3"></i><p class="text-nsT2">Your list is empty</p><p class="text-nsT3 text-sm">Click the + button on any movie to save it here</p></div>`}</div>`;
+}
+
+function renderHistoryPage(){
+  const c=document.getElementById('content');
+  if(!Auth.isLoggedIn()){c.innerHTML=`<div class="empty-state" style="min-height:60vh"><i class="fas fa-lock text-4xl text-nsT3"></i><p class="text-nsT2 text-lg">Sign in to see your history</p><button class="btn-gold mt-3" onclick="openAuthModal()">Sign In</button></div>`;return}
+  const hist=H.get();
+  const all=S.cache.movies||[];
+  const items=hist.map(h=>all.find(m=>String(m.id)===String(h.id))).filter(Boolean);
+  c.innerHTML=`<div class="p-6"><div class="flex items-center justify-between mb-5"><h1 class="font-d font-bold text-2xl">Watch History</h1>${items.length?`<button class="text-sm text-nsT3 hover:text-nsT transition-colors" onclick="H.clear();renderHistoryPage()">Clear All</button>`:''}</div>${items.length?`<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-4">${items.map((v,i)=>pc(v,i,true)).join('')}</div>`:`<div class="empty-state" style="min-height:50vh"><i class="fas fa-clock-rotate-left text-4xl text-nsT3"></i><p class="text-nsT2">No watch history yet</p><p class="text-nsT3 text-sm">Videos you watch will appear here automatically</p></div>`}</div>`;
+}
+
+async function renderWatch(vid){
+  const c=document.getElementById('content');
+
+  if (!Auth.isLoggedIn()) {
+    c.innerHTML = `<div class="empty-state" style="min-height:60vh">
+      <i class="fas fa-lock text-4xl text-nsT3"></i>
+      <p class="text-nsT2 text-lg">Sign in to watch videos</p>
+      <p class="text-nsT3 text-sm">Please log in or create an account to continue.</p>
+      <button class="btn-gold mt-3" onclick="openAuthModal()">Sign In</button>
+    </div>`;
+    return;
+  }
+
+  c.innerHTML='<div class="flex items-center justify-center" style="height:50vh"><div class="spinner"></div></div>';
+
+  H.add(vid);
+  S.lastWatched=vid;
+
+  let v=await apiFetch('/movies/'+vid);
+  if(v && v.data && !Array.isArray(v.data)) v = v.data;
+  if(!v) v=(S.cache.movies||[]).find(m=>String(m.id)===String(vid));
+  if(!v){c.innerHTML='<div class="empty-state" style="min-height:50vh"><i class="fas fa-video-slash text-4xl text-nsT3"></i><p class="text-nsT2">Video not found</p></div>';return}
+
+  const poster=v.poster||v.thumb_url||'';
+  const dur=v.dur||v.duration||0;
+
+  let streamUrl = '';
+  try {
+    const watchData = await apiFetch('/video/' + vid + '/watch-url');
+    if (watchData && watchData.url) {
+      streamUrl = watchData.url.startsWith('http') ? watchData.url : BASE + watchData.url;
+    }
+  } catch (e) {
+    console.warn('Failed to get signed URL', e);
+  }
+
+  if (!streamUrl) {
+    c.innerHTML = `<div class="empty-state" style="min-height:50vh">
+      <i class="fas fa-video-slash text-4xl text-nsT3"></i>
+      <p class="text-nsT2">Unable to load video</p>
+      <p class="text-nsT3 text-sm">Please try again later.</p>
+    </div>`;
+    return;
+  }
+
+  const savedPos=WP.get(vid);
+  const canResume=savedPos&&savedPos.time>10;
+  const all=S.cache.movies||[];
+  const recs=getRecommendations(vid,all,12);
+
+  c.innerHTML=`
+  <div class="watch-layout flex gap-6 p-6" style="flex-direction:row">
+    <div class="flex-1 min-w-0">
+      <div class="rounded-xl overflow-hidden bg-black mb-4 relative" style="aspect-ratio:16/9">
+        <video id="mainVid" src="${streamUrl}" controls controlsList="nodownload" class="w-full h-full" style="aspect-ratio:16/9;object-fit:cover"></video>
+        ${canResume?`<div class="resume-overlay" id="resumeOverlay">
+          <div class="w-16 h-16 rounded-full bg-nsA/90 flex items-center justify-center"><i class="fas fa-play text-black text-xl ml-1"></i></div>
+          <p class="text-sm font-medium">Resume from ${ft(savedPos.time)}</p>
+          <p class="text-xs text-nsT3">${ft(savedPos.time)} / ${ft(savedPos.dur)}</p>
+        </div>`:''}
+      </div>
+      <h1 class="font-d font-bold text-xl sm:text-2xl leading-tight mb-2">${esc(v.title)}</h1>
+      <div class="flex flex-wrap items-center gap-3 text-sm text-nsT2 mb-4">
+        ${v.rating?`<span class="poster-rating"><i class="fas fa-star" style="font-size:10px"></i>${v.rating}</span>`:''}
+        <span>${v.year||''}</span>${dur?`<span class="text-nsT3">·</span><span>${fd(dur)}</span>`:''}
+        ${v.views?`<span class="text-nsT3">·</span><span>${fv(v.views)} views</span>`:''}
+        ${(v.genres||[]).map(g=>`<span class="px-2 py-0.5 bg-white/5 rounded text-xs">${g}</span>`).join('')}
+      </div>
+      <div class="flex items-center gap-3 flex-wrap mb-5">
+        <button class="btn-action${ML.has(vid)?' active':''}" data-action="addlist" data-vid="${v.id}"><i class="fas fa-bookmark"></i><span>${ML.has(vid)?'Saved':'My List'}</span></button>
+        <button class="btn-action" data-action="share"><i class="fas fa-share"></i><span>Share</span></button>
+      </div>
+      <div class="bg-ns3 rounded-xl p-4 mb-6">
+        <p class="text-sm text-nsT2 whitespace-pre-line leading-relaxed">${esc(v.desc||'No description available.')}</p>
+      </div>
+    </div>
+    <div class="watch-rec flex-shrink-0" style="width:340px">
+      <h3 class="font-d font-semibold text-sm mb-3 text-nsT2">Recommended For You</h3>
+      <div class="flex flex-col gap-3">
+        ${recs.map(r=>{
+          let rp=r.poster||r.thumb_url||'';
+          if(rp && rp.startsWith('/')) rp = BASE + rp;
+          const rd=r.dur||r.duration||0;
+          return`<div class="flex gap-2 cursor-pointer group" data-vid="${r.id}">
+          <div class="rounded-lg flex-shrink-0 overflow-hidden bg-ns4 relative" style="width:140px;aspect-ratio:16/9"><img src="${rp}" alt="${esc(r.title)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" onerror="this.src='https://picsum.photos/seed/${r.id}/280/160'">${rd?`<span class="land-dur text-[10px] absolute bottom-1 right-1 bg-black/80 px-1.5 py-0.5 rounded">${fd(rd)}</span>`:''}</div>
+          <div class="min-w-0 py-0.5"><h4 class="text-[12px] font-medium text-nsT leading-snug line-clamp-2 mb-1">${esc(r.title)}</h4><p class="text-[10px] text-nsT3">${r.year||''} · ${(r.genres||[])[0]||''}</p>${r.rating?`<div class="poster-rating mt-1" style="font-size:10px"><i class="fas fa-star" style="font-size:8px"></i>${r.rating}</div>`:''}</div>
+        </div>`}).join('')}
+      </div>
+    </div>
+  </div>`;
+
+  const video=document.getElementById('mainVid');
+  if(video){
+    let si;
+    video.addEventListener('loadedmetadata',()=>{if(!canResume)video.play().catch(()=>{})});
+    video.addEventListener('play',()=>{si=setInterval(()=>WP.save(vid,video.currentTime,video.duration),5000)});
+    video.addEventListener('pause',()=>{clearInterval(si);WP.save(vid,video.currentTime,video.duration)});
+    video.addEventListener('ended',()=>{clearInterval(si);WP.clear(vid)});
+    video.addEventListener('seeked',()=>WP.save(vid,video.currentTime,video.duration));
+    const ro=document.getElementById('resumeOverlay');
+    if(ro){ro.addEventListener('click',()=>{video.currentTime=savedPos.time;video.play().catch(()=>{});ro.classList.remove('show')});requestAnimationFrame(()=>ro.classList.add('show'))}
+  }
+}
+
+async function renderSearch(q){
+  const c=document.getElementById('content');
+  c.innerHTML='<div class="flex items-center justify-center" style="height:50vh"><div class="spinner"></div></div>';
+  const j=await apiFetch('/search?q='+encodeURIComponent(q)+'&limit=60');
+  const r=extractArray(j);
+  c.innerHTML=`<div class="p-6"><p class="text-sm text-nsT2 mb-5">${r.length} result${r.length!==1?'s':''} for "<span class="text-nsT font-medium">${esc(q)}</span>"</p>${r.length?`<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-4">${r.map((v,i)=>pc(v,i)).join('')}</div>`:`<div class="empty-state"><i class="fas fa-search text-4xl text-nsT3"></i><p class="text-nsT2">No results for "${esc(q)}"</p></div>`}</div>`;
+}
+
+/* ===== APP SIDEBAR CORE NAVIGATION ===== */
+function openSB(){S.sbOpen=true;document.getElementById('sidebar').classList.add('open');const o=document.getElementById('sidebar-overlay');o.style.display='block';requestAnimationFrame(()=>o.classList.add('show'))}
+function closeSB(){S.sbOpen=false;document.getElementById('sidebar').classList.remove('open');const o=document.getElementById('sidebar-overlay');o.classList.remove('show');setTimeout(()=>o.style.display='none',250)}
+function toggleSB() {
+  if (innerWidth <= 1024) {
+    S.sbOpen ? closeSB() : openSB();
+  } else {
+    S.sbOpen = !S.sbOpen;
+    const sb = document.getElementById('sidebar');
+    const mn = document.getElementById('main');
+
+    sb.style.width = S.sbOpen ? '240px' : '72px';
+    mn.style.marginLeft = S.sbOpen ? '240px' : '72px';
+
+    sb.querySelectorAll('.sb-item span').forEach(s => s.style.display = S.sbOpen ? '' : 'none');
+    sb.querySelectorAll('[class*="uppercase"]').forEach(s => s.style.display = S.sbOpen ? '' : 'none');
+    sb.querySelector('.mt-auto').style.display = S.sbOpen ? '' : 'none';
+  }
+}
+function updateSB(){document.querySelectorAll('.sb-item').forEach(el=>{const n=el.dataset.nav;el.classList.toggle('active',(n==='home'&&S.page==='home'&&S.genre==='All')||(n==='movies'&&S.page==='movies')||(n==='games'&&S.page==='games')||(n==='mylist'&&S.page==='mylist')||(n==='history'&&S.page==='history')||(n&&n.startsWith('g-')&&S.genre===n.slice(2)))})}
+
+/* ===== SECURITY AUTH MODAL DIALOGS ===== */
+function openAuthModal(mode){
+  S.authMode=mode||'login';const isL=S.authMode==='login';
+  document.getElementById('authTitle').textContent=isL?'Welcome Back':'Create Account';
+  document.getElementById('authSub').textContent=isL?'Sign in to continue watching':'Join NexStream for free';
+  document.getElementById('nameGroup').classList.toggle('hidden',isL);
+  document.getElementById('authSubmit').textContent=isL?'Sign In':'Create Account';
+  document.getElementById('authToggleText').innerHTML=isL?"Don't have an account? <span class='text-nsA cursor-pointer hover:underline font-medium' id='authSwitch'>Sign Up</span>":"Already have an account? <span class='text-nsA cursor-pointer hover:underline font-medium' id='authSwitch'>Sign In</span>";
+  document.getElementById('authSwitch').onclick=()=>openAuthModal(isL?'signup':'login');
+  document.querySelectorAll('.input-field').forEach(f=>f.classList.remove('input-err'));
+  document.querySelectorAll('.err-msg').forEach(e=>e.classList.remove('show'));
+  document.getElementById('authName').value='';document.getElementById('authEmail').value='';document.getElementById('authPass').value='';
+  document.getElementById('authModal').classList.add('show');
+}
+function closeAuthModal(){document.getElementById('authModal').classList.remove('show')}
+
+async function handleAuth(){
+  const isL=S.authMode==='login';
+  const name=document.getElementById('authName').value.trim();
+  const email=document.getElementById('authEmail').value.trim();
+  const pw=document.getElementById('authPass').value;
+  let ok=true;
+  document.querySelectorAll('.input-field').forEach(f=>f.classList.remove('input-err'));
+  document.querySelectorAll('.err-msg').forEach(e=>e.classList.remove('show'));
+  if(!isL&&!name){document.getElementById('authName').classList.add('input-err');document.getElementById('nameErr').classList.add('show');ok=false}
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){document.getElementById('authEmail').classList.add('input-err');document.getElementById('emailErr').textContent=!email?'Email is required':'Enter a valid email';document.getElementById('emailErr').classList.add('show');ok=false}
+  if(pw.length<6){document.getElementById('authPass').classList.add('input-err');document.getElementById('passErr').classList.add('show');ok=false}
+  if(!ok)return;
+  const result=isL?await Auth.login(email,pw):await Auth.signup(name,email,pw);
+  if(result.ok){closeAuthModal();Auth.updateUI();toast(isL?'Welcome back, '+result.user.name:'Welcome, '+result.user.name)}
+  else{if(result.err.includes('mail')||result.err.includes('Email')){document.getElementById('authEmail').classList.add('input-err');document.getElementById('emailErr').textContent=result.err;document.getElementById('emailErr').classList.add('show')}else if(result.err.includes('ass')||result.err.includes('Password')){document.getElementById('authPass').classList.add('input-err');document.getElementById('passErr').textContent=result.err;document.getElementById('passErr').classList.add('show')}else toast(result.err)}
+}
+
+/* ===== APP DOM INTERACTION LISTENERS ===== */
+function initEvents(){
+  document.getElementById('menuBtn').addEventListener('click',toggleSB);
+  document.getElementById('sidebar-overlay').addEventListener('click',closeSB);
+  document.getElementById('sidebar').addEventListener('click',e=>{const n=e.target.closest('.sb-item[data-nav]');if(n)location.hash=n.dataset.nav});
+  document.getElementById('searchBtn').addEventListener('click',doSearch);
+  document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')doSearch()});
+
+  let st;
+  document.getElementById('searchInput').addEventListener('input',()=>{clearTimeout(st);st=setTimeout(doSearch,600)});
+
+  document.getElementById('content').addEventListener('click',e=>{
+    const vid=e.target.closest('[data-vid]');
+    if(vid&&!e.target.closest('[data-action]')){location.hash='watch/'+vid.dataset.vid;return}
+    const act=e.target.closest('[data-action]');
+    if(act){
+      const a=act.dataset.action,v=act.dataset.vid;
+      if(a==='play'&&v)location.hash='watch/'+v;
+      else if(a==='addlist'&&v){const added=ML.toggle(v);act.classList.toggle('active',added);const sp=act.querySelector('span');if(sp)sp.textContent=added?'Saved':'My List'}
+      else if(a==='share'){navigator.clipboard.writeText(location.href).then(()=>toast('Link copied')).catch(()=>toast(location.href))}
+    }
+    const pill=e.target.closest('.genre-pill');
+    if(pill){S.genre=pill.dataset.genre;S.page==='movies'?renderGrid('movie'):S.page==='games'?renderGrid('game'):renderHome()}
+  });
+
+  const um=document.getElementById('userMenu');
+  document.getElementById('userBtn').addEventListener('click',e=>{e.stopPropagation();um.classList.toggle('show')});
+  document.addEventListener('click',()=>um.classList.remove('show'));
+  document.getElementById('menuLoginBtn').addEventListener('click',()=>{um.classList.remove('show');openAuthModal('login')});
+  document.getElementById('menuLogoutBtn').addEventListener('click',()=>{um.classList.remove('show');Auth.logout();if(S.page==='mylist'||S.page==='history')nav('home')});
+  document.getElementById('menuMyList').addEventListener('click',()=>{um.classList.remove('show');location.hash='mylist'});
+  document.getElementById('menuHistory').addEventListener('click',()=>{um.classList.remove('show');location.hash='history'});
+  document.getElementById('authSubmit').addEventListener('click',handleAuth);
+  document.getElementById('authPass').addEventListener('keydown',e=>{if(e.key==='Enter')handleAuth()});
+  document.getElementById('authModal').querySelector('.modal-bg').addEventListener('click',closeAuthModal);
+  document.getElementById('tgAuthBtn').addEventListener('click',()=>Auth.tgLogin(Math.floor(Math.random()*999999999),'Telegram User'));
+
+  const stb=document.getElementById('scrollTopBtn');
+  addEventListener('scroll',()=>{stb.style.opacity=scrollY>400?'1':'0';stb.style.pointerEvents=scrollY>400?'auto':'none'},{passive:true});
+  stb.addEventListener('click',()=>scrollTo({top:0,behavior:'smooth'}));
+  addEventListener('hashchange',parseHash);
+  addEventListener('resize',()=>{if(innerWidth>1024){document.getElementById('sidebar-overlay').style.display='none';document.getElementById('sidebar').classList.remove('open')}});
+}
+
+function doSearch(){
+  const q=document.getElementById('searchInput').value.trim();
+  if(q){
+    location.hash='search/'+encodeURIComponent(q);
+  } else if(S.page === 'search'){
+    location.hash='home';
+  }
+}
+
+/* ===== RUNTIME START ===== */
+document.addEventListener('DOMContentLoaded',()=>{initEvents();Auth.updateUI();parseHash()});
+</script>
+</body>
+</html>
